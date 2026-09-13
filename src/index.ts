@@ -1,545 +1,265 @@
 export interface Env {
   AI: any;
   DB: D1Database;
-  MY_KV: KVNamespace;
+  API_KEYS: KVNamespace;
 }
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
-};
-
-// Favicon em SVG Espacial Super Detalhado
-const GALAXY_FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <defs>
-    <radialGradient id="spaceBg" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#0f0c22"/>
-      <stop offset="100%" stop-color="#05030a"/>
-    </radialGradient>
-    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="20%" stop-color="#ffe5a3"/>
-      <stop offset="45%" stop-color="#f43f5e"/>
-      <stop offset="70%" stop-color="#8b5cf6"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="nebulaGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.7"/>
-      <stop offset="50%" stop-color="#a855f7" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="glowEffect" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
-    <linearGradient id="spiralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#22d3ee"/>
-      <stop offset="50%" stop-color="#ec4899"/>
-      <stop offset="100%" stop-color="#8b5cf6"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="128" fill="url(#spaceBg)"/>
-  <!-- Partículas de Estrelas ao Fundo -->
-  <circle cx="100" cy="80" r="2.5" fill="#ffffff" opacity="0.9"/>
-  <circle cx="410" cy="110" r="2" fill="#67e8f9" opacity="0.85"/>
-  <circle cx="85" cy="410" r="3" fill="#f472b6" opacity="0.8"/>
-  <circle cx="430" cy="380" r="2.2" fill="#e0e7ff" opacity="0.9"/>
-  <circle cx="230" cy="50" r="1.8" fill="#ffffff" opacity="0.95"/>
-  <circle cx="460" cy="240" r="2.5" fill="#38bdf8" opacity="0.85"/>
-  <circle cx="60" cy="210" r="2" fill="#f0abfc" opacity="0.8"/>
-  <circle cx="310" cy="460" r="1.5" fill="#a7f3d0" opacity="0.75"/>
-  <!-- Névoa da Galáxia -->
-  <ellipse cx="256" cy="256" rx="210" ry="95" fill="url(#nebulaGlow)" transform="rotate(-32 256 256)" filter="url(#glowEffect)"/>
-  <ellipse cx="256" cy="256" rx="170" ry="65" fill="url(#nebulaGlow)" transform="rotate(40 256 256)" filter="url(#glowEffect)"/>
-  <!-- Braços Espirais -->
-  <path d="M 256 256 Q 320 170, 420 200 T 430 320 Q 370 420, 260 415" fill="none" stroke="url(#spiralGrad)" stroke-width="12" stroke-linecap="round" opacity="0.85" filter="url(#glowEffect)"/>
-  <path d="M 256 256 Q 192 342, 92 312 T 82 192 Q 142 92, 252 97" fill="none" stroke="url(#spiralGrad)" stroke-width="10" stroke-linecap="round" opacity="0.8" filter="url(#glowEffect)"/>
-  <!-- Anel de Órbita Estelar -->
-  <ellipse cx="256" cy="256" rx="215" ry="78" fill="none" stroke="url(#spiralGrad)" stroke-width="2.5" stroke-dasharray="6 10" transform="rotate(-25 256 256)" opacity="0.75"/>
-  <!-- Núcleo Supermassivo Luminoso -->
-  <circle cx="256" cy="256" r="95" fill="url(#coreGlow)"/>
-  <circle cx="256" cy="256" r="26" fill="#ffffff" filter="url(#glowEffect)"/>
-  <!-- Flares Estelares -->
-  <path d="M 256 186 L 256 326 M 186 256 L 326 256" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/>
-  <path d="M 210 210 L 302 302 M 302 210 L 210 302" stroke="#e0e7ff" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
-</svg>`;
-
-// Interface HTML com Tailwind CSS, Font Awesome e Google Fonts
-const HTML_CONTENT = `<!DOCTYPE html>
-<html lang="pt-BR" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OmmiAI — Inteligência Cósmica Ultrarrápida</title>
-  
-  <!-- Favicon Galáxia SVG -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace']
-          },
-          colors: {
-            space: {
-              950: '#06050e',
-              900: '#0b0a1a',
-              800: '#14122b',
-              700: '#1f1b3d',
-              accent: '#8b5cf6',
-              cyan: '#06b6d4'
-            }
-          }
-        }
-      }
-    }
-  </script>
-  
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Font Awesome 6 CDN -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-  <style>
-    /* Scrollbar Personalizada */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0b0a1a; }
-    ::-webkit-scrollbar-thumb { background: #2e2a52; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
-    
-    .glow-box {
-      box-shadow: 0 0 35px -5px rgba(139, 92, 246, 0.25);
-    }
-    .glow-cyan {
-      box-shadow: 0 0 25px -3px rgba(6, 182, 212, 0.3);
-    }
-  </style>
-</head>
-<body class="bg-space-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-purple-500 selection:text-white">
-
-  <!-- Header principal -->
-  <header class="border-b border-space-700/60 bg-space-900/80 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-cyan-400 p-0.5 shadow-lg shadow-purple-500/20">
-          <div class="w-full h-full bg-space-950 rounded-[10px] flex items-center justify-center">
-            <img src="/favicon.svg" alt="OmmiAI Galaxy" class="w-7 h-7 transform hover:rotate-45 transition-transform duration-500">
-          </div>
-        </div>
-        <div>
-          <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 via-fuchsia-300 to-purple-400 bg-clip-text text-transparent flex items-center gap-2">
-            OmmiAI
-            <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Qwen AWQ</span>
-          </h1>
-          <p class="text-xs text-slate-400 font-medium">Engine da Cloudflare Edge &bull; Latência Mínima</p>
-        </div>
-      </div>
-
-      <!-- Badge de Status -->
-      <div class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-space-800 border border-space-700">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <span class="text-emerald-400 hidden sm:inline">Online (Turbo SSE)</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- Conteúdo Principal -->
-  <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-6 flex flex-col gap-5">
-
-    <!-- Card da API Key -->
-    <div class="bg-space-900 border border-space-700/80 rounded-2xl p-4 sm:p-5 glow-box transition-all">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div class="space-y-1">
-          <div class="flex items-center gap-2 text-sm font-bold text-slate-200">
-            <i class="fa-solid fa-key text-purple-400"></i>
-            <span>Sua API Key Pessoal OmmiAI</span>
-          </div>
-          <p class="text-xs text-slate-400">Usuário vinculado: <code class="text-purple-300 font-mono bg-space-800 px-1.5 py-0.5 rounded border border-space-700">daniellorenzopereiradasilva2027</code></p>
-        </div>
-
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-          <button id="btn-get-key" onclick="fetchApiKey()" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs transition-all shadow-md flex items-center justify-center gap-2 active:scale-95">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>Gerar / Revelar API Key</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Campo da Chave -->
-      <div class="mt-4 flex items-center gap-2">
-        <div class="relative flex-1">
-          <input type="text" id="api-key-input" readonly placeholder="Clique no botão acima para carregar sua API Key..." class="w-full bg-space-950 border border-space-700/80 rounded-xl px-4 py-2.5 text-xs font-mono text-cyan-300 focus:outline-none focus:border-purple-500 pr-10 shadow-inner">
-          <i class="fa-solid fa-shield-halved absolute right-3 top-3 text-slate-600 text-sm"></i>
-        </div>
-        <button id="btn-copy" onclick="copyApiKey()" class="px-3.5 py-2.5 bg-space-800 hover:bg-space-700 border border-space-700 text-slate-300 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 active:scale-95">
-          <i class="fa-regular fa-copy text-sm" id="copy-icon"></i>
-          <span class="hidden sm:inline">Copiar</span>
-        </button>
-      </div>
-      <div id="toast-key" class="hidden mt-2 text-[11px] text-emerald-400 font-medium flex items-center gap-1">
-        <i class="fa-solid fa-circle-check"></i>
-        <span>API Key pronta e armazenada com sucesso!</span>
-      </div>
-    </div>
-
-    <!-- Janela de Chat -->
-    <div class="flex-1 bg-space-900 border border-space-700/80 rounded-2xl flex flex-col overflow-hidden min-h-[420px] shadow-2xl">
-      
-      <!-- Topo do Chat -->
-      <div class="px-5 py-3.5 border-b border-space-700/60 bg-space-800/40 flex items-center justify-between">
-        <div class="flex items-center gap-2 text-xs text-slate-300 font-semibold">
-          <i class="fa-solid fa-comments text-cyan-400"></i>
-          <span>Conversa em Tempo Real</span>
-        </div>
-        <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-rose-400 transition-colors flex items-center gap-1">
-          <i class="fa-solid fa-trash-can"></i>
-          <span class="hidden sm:inline">Limpar Chat</span>
-        </button>
-      </div>
-
-      <!-- Área de Mensagens -->
-      <div id="chat-box" class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 max-h-[500px]">
-        
-        <!-- Mensagem Inicial -->
-        <div class="flex items-start gap-3">
-          <div class="w-8 h-8 rounded-lg bg-purple-600/20 border border-purple-500/30 flex items-center justify-center shrink-0">
-            <i class="fa-solid fa-microchip text-purple-400 text-sm"></i>
-          </div>
-          <div class="bg-space-800/80 border border-space-700/70 rounded-2xl rounded-tl-none p-4 max-w-[85%] text-sm text-slate-200 leading-relaxed shadow-sm">
-            <p>Olá, <strong>Daniel</strong>! Sou o <strong>OmmiAI</strong> com motor Qwen AWQ rodando diretamente na Cloudflare.</p>
-            <p class="text-xs text-slate-400 mt-2">Como posso ajudar você hoje?</p>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Formulário de Envio -->
-      <div class="p-3 sm:p-4 border-t border-space-700/60 bg-space-950/80">
-        <form onsubmit="handleSend(event)" class="flex items-center gap-2">
-          <input type="text" id="user-prompt" autocomplete="off" placeholder="Digite sua pergunta (resposta instantânea)..." class="flex-1 bg-space-900 border border-space-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all">
-          
-          <button type="submit" id="btn-send" class="px-5 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg glow-cyan flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50">
-            <span>Enviar</span>
-            <i class="fa-solid fa-paper-plane text-xs"></i>
-          </button>
-        </form>
-      </div>
-
-    </div>
-
-  </main>
-
-  <!-- Lógica Frontend JS -->
-  <script>
-    const DEFAULT_USER = 'daniellorenzopereiradasilva2027';
-
-    // Ao carregar a página, restaura a chave se existir
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedKey = localStorage.getItem('ommi_api_key');
-      if (savedKey) {
-        document.getElementById('api-key-input').value = savedKey;
-      } else {
-        // Tenta obter automaticamente no primeiro carregamento
-        fetchApiKey();
-      }
-    });
-
-    async function fetchApiKey() {
-      const btn = document.getElementById('btn-get-key');
-      const input = document.getElementById('api-key-input');
-      const toast = document.getElementById('toast-key');
-
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> <span>Buscando...</span>';
-
-      try {
-        const res = await fetch('/getapikey/?username=' + encodeURIComponent(DEFAULT_USER));
-        const data = await res.json();
-
-        if (data.api_key) {
-          input.value = data.api_key;
-          localStorage.setItem('ommi_api_key', data.api_key);
-          toast.classList.remove('hidden');
-          setTimeout(() => toast.classList.add('hidden'), 4000);
-        } else {
-          alert('Erro ao gerar a chave: ' + (data.error || 'Tente novamente'));
-        }
-      } catch (err) {
-        alert('Erro de conexão ao buscar a API Key.');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Gerar / Revelar API Key</span>';
-      }
-    }
-
-    function copyApiKey() {
-      const input = document.getElementById('api-key-input');
-      if (!input.value) return;
-
-      navigator.clipboard.writeText(input.value);
-      const icon = document.getElementById('copy-icon');
-      icon.className = 'fa-solid fa-check text-emerald-400';
-      setTimeout(() => {
-        icon.className = 'fa-regular fa-copy';
-      }, 2000);
-    }
-
-    function clearChat() {
-      const chatBox = document.getElementById('chat-box');
-      chatBox.innerHTML = \`
-        <div class="flex items-start gap-3">
-          <div class="w-8 h-8 rounded-lg bg-purple-600/20 border border-purple-500/30 flex items-center justify-center shrink-0">
-            <i class="fa-solid fa-microchip text-purple-400 text-sm"></i>
-          </div>
-          <div class="bg-space-800/80 border border-space-700/70 rounded-2xl rounded-tl-none p-4 max-w-[85%] text-sm text-slate-200 leading-relaxed shadow-sm">
-            <p>Chat limpo! Envie uma nova mensagem para testar a resposta instantânea.</p>
-          </div>
-        </div>
-      \`;
-    }
-
-    async function handleSend(e) {
-      e.preventDefault();
-      const input = document.getElementById('user-prompt');
-      const prompt = input.value.trim();
-      if (!prompt) return;
-
-      const apiKey = localStorage.getItem('ommi_api_key') || '';
-      input.value = '';
-
-      const chatBox = document.getElementById('chat-box');
-
-      // Adiciona mensagem do Usuário
-      const userMsgDiv = document.createElement('div');
-      userMsgDiv.className = 'flex items-start justify-end gap-3';
-      userMsgDiv.innerHTML = \`
-        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl rounded-tr-none p-4 max-w-[85%] text-sm shadow-md">
-          <p>\${escapeHtml(prompt)}</p>
-        </div>
-        <div class="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center shrink-0">
-          <i class="fa-solid fa-user text-indigo-300 text-sm"></i>
-        </div>
-      \`;
-      chatBox.appendChild(userMsgDiv);
-
-      // Adiciona placeholder da IA
-      const aiMsgDiv = document.createElement('div');
-      aiMsgDiv.className = 'flex items-start gap-3';
-      const aiContentId = 'ai-res-' + Date.now();
-      aiMsgDiv.innerHTML = \`
-        <div class="w-8 h-8 rounded-lg bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center shrink-0">
-          <i class="fa-solid fa-atom text-cyan-400 text-sm animate-spin-slow"></i>
-        </div>
-        <div class="bg-space-800/90 border border-space-700/80 rounded-2xl rounded-tl-none p-4 max-w-[85%] text-sm text-slate-100 leading-relaxed shadow-md">
-          <span id="\${aiContentId}" class="inline-block"><i class="fa-solid fa-circle-notch animate-spin text-cyan-400"></i></span>
-        </div>
-      \`;
-      chatBox.appendChild(aiMsgDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      const aiTextSpan = document.getElementById(aiContentId);
-
-      try {
-        const response = await fetch('/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey
-          },
-          body: JSON.stringify({ prompt: prompt, api_key: apiKey })
-        });
-
-        if (!response.ok) {
-          aiTextSpan.innerText = '[Erro na requisição. Verifique sua chave.]';
-          return;
-        }
-
-        aiTextSpan.innerText = ''; // Limpa o loader
-
-        // Leitura do Stream SSE
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let fullText = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-              try {
-                const data = JSON.parse(line.replace('data: ', ''));
-                if (data.response) {
-                  fullText += data.response;
-                  aiTextSpan.innerText = fullText;
-                  chatBox.scrollTop = chatBox.scrollHeight;
-                }
-              } catch (err) {
-                // Fragmento incompleto do SSE, aguarda próximo chunk
-              }
-            }
-          }
-        }
-
-      } catch (err) {
-        aiTextSpan.innerText = '[Erro ao conectar com o servidor OmmiAI.]';
-      }
-    }
-
-    function escapeHtml(text) {
-      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
-  </script>
-</body>
-</html>`;
-
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // 1. Trata CORS Preflight
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: CORS_HEADERS });
-    }
-
-    // 2. Servir Favicon em SVG
-    if (url.pathname === '/favicon.svg' || url.pathname === '/favicon.ico') {
-      return new Response(GALAXY_FAVICON_SVG, {
-        headers: {
-          'Content-Type': 'image/svg+xml',
-          'Cache-Control': 'public, max-age=86400'
-        }
+    // 1. Rota Principal - Chat UI (HTML + Tailwind + SVG)
+    if (url.pathname === '/') {
+      return new Response(getChatHTML(), { 
+        headers: { 'Content-Type': 'text/html;charset=UTF-8' } 
       });
     }
 
-    // 3. Servir a Página Principal HTML
-    if (url.pathname === '/' && request.method === 'GET') {
-      return new Response(HTML_CONTENT, {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8'
-        }
-      });
+    // 2. Rota para gerar e resgatar a API Key (D1 e KV)
+    if (url.pathname.startsWith('/getapikey/')) {
+      const user = url.searchParams.get('user');
+      if (!user) return new Response(JSON.stringify({ error: "Parâmetro 'user' ausente" }), { status: 400 });
+
+      // Garante que a tabela exista (D1)
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS accounts (
+          username TEXT PRIMARY KEY, 
+          api_key TEXT, 
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+
+      // Busca a API Key no banco D1
+      let apiKey = await env.DB.prepare(`SELECT api_key FROM accounts WHERE username = ?`).bind(user).first('api_key');
+
+      // Se a conta não tiver chave, cria a API Key apenas uma vez
+      if (!apiKey) {
+        apiKey = 'ommi_' + crypto.randomUUID().replace(/-/g, '');
+        
+        // Salva permanentemente no D1
+        await env.DB.prepare(`INSERT INTO accounts (username, api_key) VALUES (?, ?)`).bind(user, apiKey).run();
+        
+        // Salva no KV para acesso ultrarrápido (cache-like) nas chamadas do /chat
+        await env.API_KEYS.put(apiKey, user as string);
+      } else {
+        // Assegura que está no KV caso tenha expirado ou limpado lá, mas ainda exista no D1
+        const kvCheck = await env.API_KEYS.get(apiKey as string);
+        if (!kvCheck) await env.API_KEYS.put(apiKey as string, user as string);
+      }
+
+      return Response.json({ api_key: apiKey, msg: "Sua chave é secreta e foi guardada com sucesso!" });
     }
 
-    // 4. Rota para Gerar ou Buscar API Key
-    if (url.pathname === '/getapikey/' || url.pathname === '/getapikey') {
-      const username = url.searchParams.get('username') || 'daniellorenzopereiradasilva2027';
-
-      try {
-        let apiKey: string | null = null;
-
-        // Tenta buscar no KV primeiro
-        if (env.MY_KV) {
-          apiKey = await env.MY_KV.get(`user_key:${username}`);
-        }
-
-        // Se não encontrou no KV, tenta buscar no D1
-        if (!apiKey && env.DB) {
-          try {
-            const row = await env.DB.prepare('SELECT api_key FROM api_keys WHERE username = ?')
-              .bind(username)
-              .first();
-            if (row && row.api_key) {
-              apiKey = row.api_key as string;
-            }
-          } catch (e) {
-            // Tabela D1 não criada ou erro de query
-          }
-        }
-
-        // Se a chave ainda não existe, cria uma nova
-        if (!apiKey) {
-          apiKey = `ommi_live_${crypto.randomUUID().replace(/-/g, '')}`;
-
-          // Salva no KV
-          if (env.MY_KV) {
-            await env.MY_KV.put(`user_key:${username}`, apiKey);
-            await env.MY_KV.put(`key_owner:${apiKey}`, username);
-          }
-
-          // Salva no D1
-          if (env.DB) {
-            try {
-              await env.DB.prepare('INSERT OR REPLACE INTO api_keys (username, api_key) VALUES (?, ?)')
-                .bind(username, apiKey)
-                .run();
-            } catch (e) {
-              // Tabela D1 opcional
-            }
-          }
-        }
-
-        return new Response(JSON.stringify({ success: true, username, api_key: apiKey }), {
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
-        });
-
-      } catch (err: any) {
-        const fallbackKey = `ommi_live_${crypto.randomUUID().replace(/-/g, '').substring(0, 16)}`;
-        return new Response(JSON.stringify({ success: true, username, api_key: fallbackKey }), {
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
-        });
+    // 3. Rota da IA (Otimizada para Qwen)
+    if (url.pathname === '/chat' && request.method === 'POST') {
+      const authHeader = request.headers.get('Authorization');
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ error: "Não Autorizado. Chave API Ausente." }), { status: 401 });
       }
-    }
-
-    // 5. Rota do Chat (Streaming Ultrarrápido com Qwen AWQ e Max Tokens Reduzido)
-    if (url.pathname === '/chat' || url.pathname === '/api/chat') {
-      if (request.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Método não permitido. Use POST.' }), {
-          status: 405,
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
-        });
-      }
+      
+      const token = authHeader.split(' ')[1];
+      
+      // Validação em Milissegundos via KV
+      const isValidUser = await env.API_KEYS.get(token);
+      if (!isValidUser) return new Response(JSON.stringify({ error: "API Key Inválida ou não encontrada no KV." }), { status: 403 });
 
       try {
         const body: any = await request.json();
-        const userPrompt = body.prompt || body.message || 'Olá';
+        const messages = body.messages || [];
 
-        // Executa o modelo Qwen AWQ altamente quantizado com Max Tokens = 256
-        const aiStream = await env.AI.run('@cf/qwen/qwen1.5-7b-chat-awq', {
-          messages: [
-            {
-              role: 'system',
-              content: 'Você é o OmmiAI, um assistente inteligente, rápido e direto ao ponto. Responda com clareza em poucas frases.'
-            },
-            { role: 'user', content: userPrompt }
-          ],
-          stream: true,      // Resposta enviada em fluxo SSE (instantânea)
-          max_tokens: 256    // Reduzido para tempo de resposta ultracurto
+        // Otimização do Qwen na Cloudflare Workers AI
+        const response = await env.AI.run('@cf/qwen/qwen1.5-14b-chat-awq', {
+            messages,
+            max_tokens: 150, // Reduzido drasticamente para gerar respostas mais velozes
+            temperature: 0.5   // Otimizado para direções lógicas e precisas
         });
 
-        return new Response(aiStream, {
-          headers: {
-            ...CORS_HEADERS,
-            'Content-Type': 'text/event-stream; charset=utf-8',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-          },
-        });
-
-      } catch (error: any) {
-        return new Response(JSON.stringify({ error: error.message || 'Erro interno no modelo' }), {
-          status: 500,
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
-        });
+        return Response.json(response);
+      } catch (e: any) {
+        return new Response(JSON.stringify({ error: e.message }), { status: 500 });
       }
     }
 
-    return new Response('Página Não Encontrada', { status: 404, headers: CORS_HEADERS });
-  },
-};
+    return new Response("Not Found", { status: 404 });
+  }
+}
+
+// 4. Interface HTML (Oculta a API Key no LocalStorage e aciona ommi-ai.rattew.workers.dev)
+function getChatHTML() {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmmiAI - Galaxy Chat</title>
+    
+    <!-- Favicon SVG Otimizado e Detalhado (Galáxia) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23fff'/%3E%3Cstop offset='20%25' stop-color='%238a2be2' stop-opacity='.8'/%3E%3Cstop offset='60%25' stop-color='%234b0082' stop-opacity='.4'/%3E%3Cstop offset='100%25' stop-color='%23000' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100' height='100' fill='%230b0b1a' rx='20'/%3E%3Ccircle cx='50' cy='50' r='40' fill='url(%23g)'/%3E%3Cpath d='M50 10C70 30 90 40 90 50C70 60 60 80 50 90C30 70 10 60 10 50C30 40 40 20 50 10Z' fill='rgba(255,255,255,.1)' transform='rotate(45 50 50)'/%3E%3Cpath d='M50 20C65 35 80 45 80 50C65 55 55 70 50 80C35 65 20 55 20 50C35 45 45 30 50 20Z' fill='rgba(138,43,226,.3)' transform='rotate(-30 50 50)'/%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%23fff'/%3E%3Ccircle cx='80' cy='30' r='1.5' fill='%23fff'/%3E%3Ccircle cx='70' cy='80' r='1.5' fill='%23fff'/%3E%3Ccircle cx='30' cy='70' r='1.5' fill='%23fff'/%3E%3Ccircle cx='85' cy='65' r='1' fill='%23fff'/%3E%3Ccircle cx='15' cy='50' r='1' fill='%23fff'/%3E%3C/svg%3E">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts CDN (Space Grotesk - Vibe Tecnológica) -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #0b0b1a; color: #fff; }
+        .chat-container { scroll-behavior: smooth; }
+        .message-ai { background: rgba(138, 43, 226, 0.1); border: 1px solid rgba(138, 43, 226, 0.3); }
+        .message-user { background: rgba(255, 255, 255, 0.05); }
+        .glass-panel { background: rgba(11, 11, 26, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Oculta scrollbar mas permite scroll */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(138, 43, 226, 0.5); border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen flex flex-col relative overflow-hidden">
+    
+    <!-- Cabeçalho (Botão da Chave API Oculta) -->
+    <header class="glass-panel p-4 flex justify-between items-center z-10 shadow-lg">
+        <div class="flex items-center gap-3">
+            <img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23fff'/%3E%3Cstop offset='20%25' stop-color='%238a2be2' stop-opacity='.8'/%3E%3Cstop offset='60%25' stop-color='%234b0082' stop-opacity='.4'/%3E%3Cstop offset='100%25' stop-color='%23000' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100' height='100' fill='%230b0b1a' rx='20'/%3E%3Ccircle cx='50' cy='50' r='40' fill='url(%23g)'/%3E%3Cpath d='M50 10C70 30 90 40 90 50C70 60 60 80 50 90C30 70 10 60 10 50C30 40 40 20 50 10Z' fill='rgba(255,255,255,.1)' transform='rotate(45 50 50)'/%3E%3Cpath d='M50 20C65 35 80 45 80 50C65 55 55 70 50 80C35 65 20 55 20 50C35 45 45 30 50 20Z' fill='rgba(138,43,226,.3)' transform='rotate(-30 50 50)'/%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%23fff'/%3E%3Ccircle cx='80' cy='30' r='1.5' fill='%23fff'/%3E%3Ccircle cx='70' cy='80' r='1.5' fill='%23fff'/%3E%3Ccircle cx='30' cy='70' r='1.5' fill='%23fff'/%3E%3Ccircle cx='85' cy='65' r='1' fill='%23fff'/%3E%3Ccircle cx='15' cy='50' r='1' fill='%23fff'/%3E%3C/svg%3E" alt="Galaxy Icon" class="w-10 h-10 rounded-full border border-purple-500 shadow-[0_0_10px_rgba(138,43,226,0.6)]">
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400">OmmiAI</h1>
+        </div>
+        <button id="authBtn" class="bg-purple-600 hover:bg-purple-500 border border-purple-400 transition-all px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(138,43,226,0.4)]">
+            <i class="fa-solid fa-key"></i> <span id="authText">Autenticar API Key</span>
+        </button>
+    </header>
+
+    <!-- Área de Chat -->
+    <main id="chatBox" class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col gap-5 chat-container pb-28">
+        <div class="message-ai p-4 rounded-xl max-w-[85%] md:max-w-[70%] self-start flex gap-4 shadow-lg backdrop-blur-sm">
+            <i class="fa-solid fa-robot mt-1 text-2xl text-purple-400 drop-shadow-md"></i>
+            <div>
+                <p class="leading-relaxed font-semibold text-purple-200">Bem-vindo(a) ao OmmiAI.</p>
+                <p class="leading-relaxed text-sm text-gray-300 mt-1">Gere sua conta para conectar com o endpoint rápido Qwen!</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Barra de Input -->
+    <footer class="glass-panel p-4 absolute bottom-0 w-full">
+        <form id="chatForm" class="flex gap-3 max-w-5xl mx-auto relative">
+            <input type="text" id="userInput" placeholder="Vincule sua conta para iniciar..." class="flex-1 bg-[#1a1a2e] border border-gray-600 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-purple-500 transition shadow-inner placeholder-gray-400" disabled>
+            <button type="submit" id="sendBtn" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-6 py-4 rounded-2xl font-bold transition shadow-[0_0_15px_rgba(138,43,226,0.5)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-white" disabled>
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+    </footer>
+
+    <script>
+        const authBtn = document.getElementById('authBtn');
+        const authText = document.getElementById('authText');
+        const chatForm = document.getElementById('chatForm');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatBox = document.getElementById('chatBox');
+
+        let messages = [
+            { role: 'system', content: 'Você é OmmiAI, um assistente inteligente. Responda de forma extremamente objetiva e rápida.' }
+        ];
+
+        // Se a chave já existir no cache local do usuário (nunca aparece na UI)
+        if (localStorage.getItem('ommi_api_key')) {
+            enableChat(localStorage.getItem('ommi_username'));
+        }
+
+        authBtn.addEventListener('click', async () => {
+            if (localStorage.getItem('ommi_api_key')) {
+                alert('Sua conta já está ativada. A API Key opera nos bastidores de forma segura!');
+                return;
+            }
+            
+            const username = prompt('Digite seu Nome de Usuário para gravar no banco D1:');
+            if (!username) return;
+
+            try {
+                authText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando...';
+                const res = await fetch('/getapikey/?user=' + encodeURIComponent(username));
+                const data = await res.json();
+                
+                if (data.api_key) {
+                    // Guarda silenciosamente a chave gerada. Não será vista pelo usuário!
+                    localStorage.setItem('ommi_api_key', data.api_key);
+                    localStorage.setItem('ommi_username', username);
+                    enableChat(username);
+                }
+            } catch(e) {
+                alert('Erro ao conectar com o KV/D1.');
+                authText.innerText = "Autenticar API Key";
+            }
+        });
+
+        function enableChat(username) {
+            authText.innerText = 'Conta: ' + username;
+            authBtn.classList.replace('bg-purple-600', 'bg-[#10b981]');
+            authBtn.classList.replace('hover:bg-purple-500', 'hover:bg-[#059669]');
+            authBtn.classList.replace('border-purple-400', 'border-green-400');
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.placeholder = "Mensagem enviada de forma super rápida via OmmiAI...";
+        }
+
+        function addMessage(text, isUser = false) {
+            const div = document.createElement('div');
+            div.className = \`\${isUser ? 'message-user self-end' : 'message-ai self-start'} p-4 rounded-xl max-w-[85%] md:max-w-[70%] flex gap-4 shadow-lg backdrop-blur-sm\`;
+            div.innerHTML = \`
+                \${isUser ? '' : '<i class="fa-solid fa-robot mt-1 text-2xl text-purple-400"></i>'}
+                <p class="leading-relaxed whitespace-pre-wrap text-[15px]">\${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                \${isUser ? '<i class="fa-solid fa-user-astronaut mt-1 text-2xl text-gray-400"></i>' : ''}
+            \`;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, true);
+            messages.push({ role: 'user', content: text });
+            
+            userInput.value = '';
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+            try {
+                // Recupera a chave oculta
+                const token = localStorage.getItem('ommi_api_key');
+                
+                // Conectando direto no endpoint oficial como solicitado
+                const res = await fetch('https://ommi-ai.rattew.workers.dev/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ messages })
+                });
+
+                if (!res.ok) throw new Error('Chave recusada ou instabilidade no endpoint HTTP.');
+                
+                const data = await res.json();
+                const aiMsg = data.response || "Comunicação sem resposta do IA.";
+                
+                addMessage(aiMsg, false);
+                messages.push({ role: 'assistant', content: aiMsg });
+            } catch(err) {
+                addMessage("ERRO: Falha ao requisitar o ommi-ai.rattew.workers.dev. Verifique as configurações CORS e sua API Key.", false);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+                userInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>`;
+}
