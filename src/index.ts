@@ -24,6 +24,7 @@ export default {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           username TEXT UNIQUE,
           password_hash TEXT,
+          api_key TEXT,
           created_at INTEGER
         );
       `).run();
@@ -78,19 +79,37 @@ export default {
     }
 
     // -----------------------------------------------------------------
-    // API: GERAR API KEY (Salva simultaneamente em D1 e KV) (/getapikey/)
+    // API: GERAR OU RECUPERAR A ÚNICA API KEY DA CONTA (D1 + KV) (/getapikey/)
     // -----------------------------------------------------------------
     if (path.startsWith("/getapikey")) {
       const urlParams = new URLSearchParams(url.search);
-      const username = urlParams.get("username") || "anonymous";
-      const apiKey = "ommi_live_" + crypto.randomUUID().replace(/-/g, "");
+      const username = urlParams.get("username");
+
+      if (!username) {
+        return new Response(JSON.stringify({ error: "Usuário não especificado." }), { status: 400, headers: { "Content-Type": "application/json" } });
+      }
+
+      // Verifica se o usuário já tem uma API Key salva no D1
+      const userRecord: any = await env.DB.prepare(`SELECT api_key FROM users WHERE username = ?`).bind(username).first();
       
-      // Salva no KV
-      await env.OMMI_KEYS.put(apiKey, JSON.stringify({ username, created_at: Date.now() }));
+      let apiKey = userRecord?.api_key;
+
+      if (!apiKey) {
+        // Se não tiver, gera uma nova chave única para este usuário
+        apiKey = "ommi_live_" + crypto.randomUUID().replace(/-/g, "");
+        
+        // Salva no D1
+        await env.DB.prepare(`UPDATE users SET api_key = ? WHERE username = ?`).bind(apiKey, username).run();
+        
+        // Salva no KV
+        if (env.OMMI_KEYS) {
+          await env.OMMI_KEYS.put(apiKey, JSON.stringify({ username, created_at: Date.now() }));
+        }
+      }
 
       return new Response(JSON.stringify({
         status: "success",
-        message: "API Key gerada e sincronizada no KV e D1 com sucesso!",
+        message: "Chave de API única da conta recuperada com sucesso.",
         api_key: apiKey,
         owner: username
       }, null, 2), {
@@ -167,7 +186,7 @@ export default {
     </head>
     <body class="h-full text-slate-100 flex flex-col overflow-hidden">
 
-        <!-- AUTH MODAL (Exigir Conta) -->
+        <!-- AUTH MODAL -->
         <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
             <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl">
                 <div class="text-center mb-6">
@@ -224,7 +243,7 @@ export default {
                         <i class="fa-solid fa-circle-user text-slate-400 text-lg"></i>
                         <span id="current-username-display" class="truncate font-medium">User</span>
                     </div>
-                    <button onclick="getApiKey()" title="Gerar API Key" class="text-slate-400 hover:text-blue-400 transition p-2"><i class="fa-solid fa-key"></i></button>
+                    <button onclick="getApiKey()" title="Ver minha API Key única" class="text-slate-400 hover:text-blue-400 transition p-2"><i class="fa-solid fa-key"></i></button>
                     <button onclick="logout()" title="Sair" class="text-slate-400 hover:text-rose-400 transition p-2"><i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
             </div>
@@ -265,7 +284,7 @@ export default {
             </div>
         </div>
 
-        <!-- SCRIPT CLIENTE (IndexedDB + Logica UI) -->
+        <!-- SCRIPT CLIENTE -->
         <script>
             let authMode = 'login';
             let currentUser = localStorage.getItem('ommi_user') || null;
@@ -273,7 +292,6 @@ export default {
             let currentConvId = null;
             let conversations = [];
 
-            // IndexedDB Setup
             let dbIDB = null;
             const idbRequest = indexedDB.open("OmmiAI_LocalDB", 1);
             idbRequest.onupgradeneeded = (e) => {
@@ -356,7 +374,6 @@ export default {
                 document.getElementById('btn-laser').className = mode === 'laser' ? 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white transition' : 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition';
             }
 
-            // IndexedDB & D1 Sincronização de Conversas
             async function saveCurrentConversation(title, messages) {
                 if (!currentConvId) {
                     currentConvId = 'conv_' + Date.now();
@@ -364,13 +381,11 @@ export default {
                 }
                 const convData = { id: currentConvId, username: currentUser, title, messages, updated_at: Date.now() };
 
-                // Salvar no IndexedDB local
                 if (dbIDB) {
                     const tx = dbIDB.transaction("conversations", "readwrite");
                     tx.objectStore("conversations").put(convData);
                 }
 
-                // Sincronizar com D1 Cloudflare
                 await fetch('/api/conversations', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -391,7 +406,6 @@ export default {
                         createNewConversation();
                     }
                 } catch(e) {
-                    // Fallback IndexedDB se offline
                     if (dbIDB) {
                         const tx = dbIDB.transaction("conversations", "readonly");
                         const req = tx.objectStore("conversations").getAll();
@@ -499,7 +513,7 @@ export default {
             async function getApiKey() {
                 const res = await fetch('/getapikey/?username=' + currentUser);
                 const data = await res.json();
-                alert("Sua API Key gerada (Salva no KV e D1):\\n\\n" + data.api_key);
+                alert("Sua única API Key vinculada à conta:\\n\\n" + data.api_key);
             }
 
             function escapeHtml(text) {
