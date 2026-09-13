@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "ommi-ai",
+  "name": "ommi-ai-gateway",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-13",
   "ai": {
@@ -10,6 +10,13 @@
     {
       "binding": "OMMI_KEYS",
       "id": "25f55c960638497bb30e246e4a2c406c"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ommid1",
+      "database_id": "b2b5745e-3220-414b-9a58-1ca9aca79ef6"
     }
   ]
 }
